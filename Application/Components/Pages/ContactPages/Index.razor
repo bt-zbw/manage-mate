@@ -1,0 +1,39 @@
+﻿@page "/contacts"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Application.Models
+@using Application.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<Application.Data.ApplicationContext> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="contacts/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="context.Contact">
+    <PropertyColumn Property="contact => contact.FirstName" />
+    <PropertyColumn Property="contact => contact.LastName" />
+    <PropertyColumn Property="contact => contact.Email" />
+    <PropertyColumn Property="contact => contact.Phone" />
+
+    <TemplateColumn Context="contact">
+        <a href="@($"contacts/edit?id={contact.Id}")">Edit</a> |
+        <a href="@($"contacts/details?id={contact.Id}")">Details</a> |
+        <a href="@($"contacts/delete?id={contact.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private ApplicationContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  managemate.application:
+    image: ${DOCKER_REGISTRY}managemate.application:${VERSION}
+    build:
+      context: .
+      dockerfile: Application/Dockerfile
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+
+  managemate.database:
+    image: postgres:latest
+    container_name: managemate.database
+    environment:
+      - POSTGRES_DB=managemate
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+     - ./.containers/managemate:/var/lib/postgresql/data
+    ports:
+     - 5432:5432    
