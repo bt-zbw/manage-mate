@@ -1,10 +1,10 @@
-version: '3.8'
+
 services:
   managemate.application:
-    image: ${DOCKER_REGISTRY}managemate.application:${VERSION}
+    image: ${DOCKER_REGISTRY:-myregistry/}managemate.application:${VERSION:-latest}
     build:
-      context: .
-      dockerfile: Application/Dockerfile
+        context: ./Application
+        dockerfile: Dockerfile
     ports:
       - "5000:5000"
       - "5001:5001"
