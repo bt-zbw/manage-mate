@@ -1,19 +1,19 @@
 
 services:
-  managemate.application:
-    image: ${DOCKER_REGISTRY:-myregistry/}managemate.application:${VERSION:-latest}
+  application:
+    image: managemate.application:${VERSION:-latest}
     build:
         context: ./Application
         dockerfile: Dockerfile
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=Debug
       - ASPNETCORE_HTTP_PORTS=5000
       - ASPNETCORE_HTTPS_PORTS=5001
     ports:
-      - "5000:5000"
-      - "5001:5001"
+      - "50000:50000"
+      - "50001:50001"
 
-  managemate.database:
+  database:
     image: postgres:latest
     container_name: managemate.database
     environment:
