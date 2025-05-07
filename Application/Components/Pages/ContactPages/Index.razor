@@ -1,10 +1,9 @@
 ﻿@page "/contacts"
+@using Application.Database
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.QuickGrid
-@using Application.Models
-@using Application.Data
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
 @implements IAsyncDisposable
-@inject IDbContextFactory<Application.Data.ApplicationContext> DbFactory
 
 <PageTitle>Index</PageTitle>
 
@@ -28,12 +27,12 @@
 </QuickGrid>
 
 @code {
-    private ApplicationContext context = default!;
+private ApplicationDbContext context = default!;
 
-    protected override void OnInitialized()
-    {
-        context = DbFactory.CreateDbContext();
-    }
+protected override void OnInitialized()
+{
+context = DbFactory.CreateDbContext();
+}
 
-    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+public async ValueTask DisposeAsync() => await context.DisposeAsync();
 }

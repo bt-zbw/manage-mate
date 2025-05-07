@@ -1,7 +1,8 @@
 ﻿@page "/contacts/edit"
 @using Microsoft.EntityFrameworkCore
 @using Application.Models
-@inject IDbContextFactory<Application.Data.ApplicationContext> DbFactory
+@using DbContext = Application.Database.ApplicationDbContext
+@inject IDbContextFactory<DbContext> DbFactory
 @inject NavigationManager NavigationManager
 
 <PageTitle>Edit</PageTitle>
