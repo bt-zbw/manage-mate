@@ -13,6 +13,7 @@
 .idea
 *.idea/.idea.ManageMate/.idea
 *.idea
+*.idea/
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
