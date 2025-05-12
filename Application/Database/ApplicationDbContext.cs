@@ -9,5 +9,6 @@ namespace Application.Database
             : base(options) { }
 
         public DbSet<Contact> Contact { get; set; } = default!;
+        public DbSet<Application.Models.Address> Address { get; set; } = default!;
     }
 }

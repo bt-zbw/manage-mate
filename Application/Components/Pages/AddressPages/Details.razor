@@ -1,0 +1,52 @@
+﻿@page "/addresses/details"
+@using Microsoft.EntityFrameworkCore
+@using Application.Models
+@inject IDbContextFactory<Application.Database.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Address</h2>
+    <hr />
+    @if (address is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Street</dt>
+            <dd class="col-sm-10">@address.Street</dd>
+            <dt class="col-sm-2">City</dt>
+            <dd class="col-sm-10">@address.City</dd>
+            <dt class="col-sm-2">ZipCode</dt>
+            <dd class="col-sm-10">@address.ZipCode</dd>
+            <dt class="col-sm-2">Country</dt>
+            <dd class="col-sm-10">@address.Country</dd>
+        </dl>
+        <div>
+            <a href="@($"/addresses/edit?id={address.Id}")">Edit</a> |
+            <a href="@($"/addresses")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Address? address;
+
+    [SupplyParameterFromQuery]
+    private Guid Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        address = await context.Address.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (address is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}
