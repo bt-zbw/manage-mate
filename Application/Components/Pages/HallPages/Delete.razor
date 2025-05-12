@@ -1,0 +1,51 @@
+﻿@page "/halls/delete"
+@using Microsoft.EntityFrameworkCore
+@using Application.Models
+@inject IDbContextFactory<Application.Database.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Delete</PageTitle>
+
+<h1>Delete</h1>
+
+<p>Are you sure you want to delete this?</p>
+<div>
+    <h2>Hall</h2>
+    <hr />
+    @if (hall is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <EditForm method="post" Model="hall" OnValidSubmit="DeleteHall" FormName="delete" Enhance>
+            <button type="submit" class="btn btn-danger" disabled="@(hall is null)">Delete</button> |
+            <a href="/halls">Back to List</a>
+        </EditForm>
+    }
+</div>
+
+@code {
+    private Hall? hall;
+
+    [SupplyParameterFromQuery]
+    private Guid Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        hall = await context.Hall.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (hall is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async Task DeleteHall()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Hall.Remove(hall!);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/halls");
+    }
+}

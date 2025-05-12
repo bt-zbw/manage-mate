@@ -1,7 +1,7 @@
 ﻿using System;
 
 namespace Application.Models {
-    public class Callendar {
+    public class Calendar {
         public Guid Id { get; set; }
         public Hall Hall { get; set; }
         public List<Reservation> Reservations { get; set; }

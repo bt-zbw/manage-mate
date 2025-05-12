@@ -1,0 +1,67 @@
+﻿@page "/addresses/delete"
+@using Microsoft.EntityFrameworkCore
+@using Application.Models
+@inject IDbContextFactory<Application.Database.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Delete</PageTitle>
+
+<h1>Delete</h1>
+
+<p>Are you sure you want to delete this?</p>
+<div>
+    <h2>Address</h2>
+    <hr />
+    @if (address is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Street</dt>
+            <dd class="col-sm-10">@address.Street</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">City</dt>
+            <dd class="col-sm-10">@address.City</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">ZipCode</dt>
+            <dd class="col-sm-10">@address.ZipCode</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Country</dt>
+            <dd class="col-sm-10">@address.Country</dd>
+        </dl>
+        <EditForm method="post" Model="address" OnValidSubmit="DeleteAddress" FormName="delete" Enhance>
+            <button type="submit" class="btn btn-danger" disabled="@(address is null)">Delete</button> |
+            <a href="/addresses">Back to List</a>
+        </EditForm>
+    }
+</div>
+
+@code {
+    private Address? address;
+
+    [SupplyParameterFromQuery]
+    private Guid Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        address = await context.Address.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (address is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async Task DeleteAddress()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Address.Remove(address!);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/addresses");
+    }
+}

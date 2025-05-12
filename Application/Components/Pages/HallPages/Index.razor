@@ -1,0 +1,35 @@
+﻿@page "/halls"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Application.Models
+@using Application.Database
+@implements IAsyncDisposable
+@inject IDbContextFactory<Application.Database.ApplicationDbContext> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="halls/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="context.Hall">
+
+    <TemplateColumn Context="hall">
+        <a href="@($"halls/edit?id={hall.Id}")">Edit</a> |
+        <a href="@($"halls/details?id={hall.Id}")">Details</a> |
+        <a href="@($"halls/delete?id={hall.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private ApplicationDbContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

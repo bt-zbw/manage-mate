@@ -1,0 +1,50 @@
+﻿@page "/reservations/details"
+@using Microsoft.EntityFrameworkCore
+@using Application.Models
+@inject IDbContextFactory<Application.Database.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Reservation</h2>
+    <hr />
+    @if (reservation is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">AccessCode</dt>
+            <dd class="col-sm-10">@reservation.AccessCode</dd>
+            <dt class="col-sm-2">Name</dt>
+            <dd class="col-sm-10">@reservation.Name</dd>
+            <dt class="col-sm-2">Description</dt>
+            <dd class="col-sm-10">@reservation.Description</dd>
+        </dl>
+        <div>
+            <a href="@($"/reservations/edit?id={reservation.Id}")">Edit</a> |
+            <a href="@($"/reservations")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Reservation? reservation;
+
+    [SupplyParameterFromQuery]
+    private Guid Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        reservation = await context.Reservation.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (reservation is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

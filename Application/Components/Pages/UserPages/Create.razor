@@ -1,0 +1,59 @@
+﻿@page "/users/create"
+@using Microsoft.EntityFrameworkCore
+@using Application.Models
+@inject IDbContextFactory<Application.Database.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>User</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="User" OnValidSubmit="AddUser" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="firstname" class="form-label">Firstname:</label> 
+                <InputText id="firstname" @bind-Value="User.Firstname" class="form-control" /> 
+                <ValidationMessage For="() => User.Firstname" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="lastname" class="form-label">Lastname:</label> 
+                <InputText id="lastname" @bind-Value="User.Lastname" class="form-control" /> 
+                <ValidationMessage For="() => User.Lastname" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="email" class="form-label">Email:</label> 
+                <InputText id="email" @bind-Value="User.Email" class="form-control" /> 
+                <ValidationMessage For="() => User.Email" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="admin" class="form-label">Admin:</label> 
+                <InputCheckbox id="admin" @bind-Value="User.Admin" class="form-check-input" /> 
+                <ValidationMessage For="() => User.Admin" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/users">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private User User { get; set; } = new();
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddUser()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.User.Add(User);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/users");
+    }
+}

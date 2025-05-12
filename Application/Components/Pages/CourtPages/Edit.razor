@@ -1,0 +1,89 @@
+﻿@page "/courts/edit"
+@using Microsoft.EntityFrameworkCore
+@using Application.Models
+@inject IDbContextFactory<Application.Database.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>Court</h2>
+<hr />
+@if (Court is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Court" OnValidSubmit="UpdateCourt" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="Court.Id" value="@Court.Id" />
+                <div class="mb-3">
+                    <label for="number" class="form-label">Number:</label>
+                    <InputNumber id="number" @bind-Value="Court.Number" class="form-control" />
+                    <ValidationMessage For="() => Court.Number" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/courts">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private Guid Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private Court? Court { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Court ??= await context.Court.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (Court is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdateCourt()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(Court!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!CourtExists(Court!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/courts");
+    }
+
+    private bool CourtExists(Guid id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Court.Any(e => e.Id == id);
+    }
+}
