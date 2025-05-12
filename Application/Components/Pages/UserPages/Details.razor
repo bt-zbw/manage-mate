@@ -1,0 +1,52 @@
+﻿@page "/users/details"
+@using Microsoft.EntityFrameworkCore
+@using Application.Models
+@inject IDbContextFactory<Application.Database.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>User</h2>
+    <hr />
+    @if (user is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Firstname</dt>
+            <dd class="col-sm-10">@user.Firstname</dd>
+            <dt class="col-sm-2">Lastname</dt>
+            <dd class="col-sm-10">@user.Lastname</dd>
+            <dt class="col-sm-2">Email</dt>
+            <dd class="col-sm-10">@user.Email</dd>
+            <dt class="col-sm-2">Admin</dt>
+            <dd class="col-sm-10">@user.Admin</dd>
+        </dl>
+        <div>
+            <a href="@($"/users/edit?id={user.Id}")">Edit</a> |
+            <a href="@($"/users")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private User? user;
+
+    [SupplyParameterFromQuery]
+    private Guid Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        user = await context.User.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (user is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

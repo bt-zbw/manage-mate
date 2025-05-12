@@ -1,0 +1,44 @@
+﻿@page "/halls/details"
+@using Microsoft.EntityFrameworkCore
+@using Application.Models
+@inject IDbContextFactory<Application.Database.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Hall</h2>
+    <hr />
+    @if (hall is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+        </dl>
+        <div>
+            <a href="@($"/halls/edit?id={hall.Id}")">Edit</a> |
+            <a href="@($"/halls")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Hall? hall;
+
+    [SupplyParameterFromQuery]
+    private Guid Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        hall = await context.Hall.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (hall is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

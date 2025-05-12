@@ -1,0 +1,84 @@
+﻿@page "/halls/edit"
+@using Microsoft.EntityFrameworkCore
+@using Application.Models
+@inject IDbContextFactory<Application.Database.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>Hall</h2>
+<hr />
+@if (Hall is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Hall" OnValidSubmit="UpdateHall" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="Hall.Id" value="@Hall.Id" />
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/halls">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private Guid Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private Hall? Hall { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Hall ??= await context.Hall.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (Hall is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdateHall()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(Hall!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!HallExists(Hall!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/halls");
+    }
+
+    private bool HallExists(Guid id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Hall.Any(e => e.Id == id);
+    }
+}

@@ -1,0 +1,44 @@
+﻿@page "/courts/create"
+@using Microsoft.EntityFrameworkCore
+@using Application.Models
+@inject IDbContextFactory<Application.Database.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>Court</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="Court" OnValidSubmit="AddCourt" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="number" class="form-label">Number:</label> 
+                <InputNumber id="number" @bind-Value="Court.Number" class="form-control" /> 
+                <ValidationMessage For="() => Court.Number" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/courts">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private Court Court { get; set; } = new();
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddCourt()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Court.Add(Court);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/courts");
+    }
+}
