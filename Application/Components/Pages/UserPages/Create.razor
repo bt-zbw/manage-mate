@@ -29,7 +29,18 @@
                 <label for="email" class="form-label">Email:</label> 
                 <InputText id="email" @bind-Value="User.Email" class="form-control" /> 
                 <ValidationMessage For="() => User.Email" class="text-danger" /> 
-            </div>        
+            </div>   
+            <div class="mb-3">
+                <label for="address" class="form-label">Address:</label>
+                <InputSelect id="address" @bind-Value="User.Address.Id" class="form-control">
+                    <option value="">Select an address</option>
+                    @foreach (var address in Addresses)
+                    {
+                        <option value="@address.Id">@($"{address.Street}, {address.City}, {address.Country}")</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="() => User.Address.Id" class="text-danger" />
+            </div>
             <div class="mb-3">
                 <label for="admin" class="form-label">Admin:</label> 
                 <InputCheckbox id="admin" @bind-Value="User.Admin" class="form-check-input" /> 
@@ -46,14 +57,33 @@
 
 @code {
     [SupplyParameterFromForm]
-    private User User { get; set; } = new();
+    private User User { get; set; } = new() { Address = new Address() };
 
-    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private List<Address> Addresses { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Addresses = await context.Address.ToListAsync() ?? new List<Address>();
+    }
+
     private async Task AddUser()
     {
         using var context = DbFactory.CreateDbContext();
+
+        // Überprüfen, ob die Adresse bereits existiert
+        var existingAddress = await context.Address
+            .FirstOrDefaultAsync(a => a.Id == User.Address.Id);
+
+        if (existingAddress != null)
+        {
+            // Existierende Adresse verwenden
+            User.Address = existingAddress;
+        }
+        
         context.User.Add(User);
         await context.SaveChangesAsync();
         NavigationManager.NavigateTo("/users");
     }
 }
+    

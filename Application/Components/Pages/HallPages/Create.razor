@@ -15,6 +15,19 @@
         <EditForm method="post" Model="Hall" OnValidSubmit="AddHall" FormName="create" Enhance>
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert"/>
+            
+            <div class="mb-3">
+                <label for="courts" class="form-label">Courts:</label>
+                <InputSelect id="courts" @bind-Value="SelectedCourtId" class="form-control">
+                    <option value="">Select a court</option>
+                    @foreach (var court in Courts)
+                    {
+                        <option value="@court.Id">@($"{court.Name} - {court.Number}")</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="() => SelectedCourtId" class="text-danger" />
+            </div>
+            
             <button type="submit" class="btn btn-primary">Create</button>
         </EditForm>
     </div>
@@ -28,10 +41,30 @@
     [SupplyParameterFromForm]
     private Hall Hall { get; set; } = new();
 
-    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private List<Court> Courts { get; set; } = new();
+    private Guid? SelectedCourtId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Courts = await context.Court.ToListAsync();
+    }
+
     private async Task AddHall()
     {
         using var context = DbFactory.CreateDbContext();
+
+        // Optional: Court-Logik hinzufügen, falls benötigt
+        if (SelectedCourtId.HasValue)
+        {
+            var selectedCourt = await context.Court.FindAsync(SelectedCourtId.Value);
+            if (selectedCourt != null)
+            {
+                Hall.Courts ??= new List<Court>();
+                Hall.Courts.Add(selectedCourt);
+            }
+        }
+
         context.Hall.Add(Hall);
         await context.SaveChangesAsync();
         NavigationManager.NavigateTo("/halls");
