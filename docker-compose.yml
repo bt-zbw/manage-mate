@@ -9,10 +9,14 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=5211
+    networks:
+      testNet:
+        ipv4_address: 192.168.10.2
     ports:
       - "5211:5211"
     depends_on:
       - database
+      - mqttBroker
 
   database:
     image: postgres:latest
@@ -23,8 +27,30 @@ services:
       POSTGRES_PASSWORD: postgres
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      testNet:
+        ipv4_address: 192.168.10.3
     ports:
       - "5432:5432"
+
+  mqttBroker:
+    image: docker.io/eclipse-mosquitto:2.0.18
+    tty: true
+    stdin_open: true
+    container_name: MqttBroker
+    networks:
+      testNet:
+        ipv4_address: 192.168.10.20
+    ports:
+      - '1883:1883'
+    command: mosquitto -c /mosquitto-no-auth.conf
+
+networks:
+  testNet:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "192.168.10.0/24"
 
 volumes:
   pgdata:
