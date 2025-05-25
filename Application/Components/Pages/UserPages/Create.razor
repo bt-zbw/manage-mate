@@ -70,14 +70,12 @@
     private async Task AddUser()
     {
         using var context = DbFactory.CreateDbContext();
-
-        // Überprüfen, ob die Adresse bereits existiert
+        
         var existingAddress = await context.Address
             .FirstOrDefaultAsync(a => a.Id == User.Address.Id);
 
         if (existingAddress != null)
         {
-            // Existierende Adresse verwenden
             User.Address = existingAddress;
         }
         

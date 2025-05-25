@@ -12,9 +12,21 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <EditForm method="post" Model="Hall" OnValidSubmit="AddHall" FormName="create" Enhance>
+        <EditForm Model="@Hall" OnValidSubmit="AddHall" FormName="createHall" method="post" Enhance>
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert"/>
+            
+            <div class="mb-3">
+                <label for="address" class="form-label">Address:</label>
+                <InputSelect id="address" @bind-Value="Hall.Address.Id" class="form-control">
+                    <option value="">Select an address</option>
+                    @foreach (var address in Addresses)
+                    {
+                        <option value="@address.Id">@($"{address.Street}, {address.City}, {address.Country}")</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="() => Hall.Address.Id" class="text-danger" />
+            </div>
             
             <div class="mb-3">
                 <label for="courts" class="form-label">Courts:</label>
@@ -25,7 +37,6 @@
                         <option value="@court.Id">@($"{court.Name} - {court.Number}")</option>
                     }
                 </InputSelect>
-                <ValidationMessage For="() => SelectedCourtId" class="text-danger" />
             </div>
             
             <button type="submit" class="btn btn-primary">Create</button>
@@ -37,12 +48,20 @@
     <a href="/halls">Back to List</a>
 </div>
 
+
+
 @code {
-    [SupplyParameterFromForm]
-    private Hall Hall { get; set; } = new();
+    private List<Address> Addresses { get; set; } = new();
+    private Hall Hall { get; set; } = new()
+    {
+        Id = Guid.NewGuid(),
+        Address = new Address(),
+        Courts = new List<Court>()
+    };
 
     private List<Court> Courts { get; set; } = new();
     private Guid? SelectedCourtId { get; set; }
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -53,8 +72,7 @@
     private async Task AddHall()
     {
         using var context = DbFactory.CreateDbContext();
-
-        // Optional: Court-Logik hinzufügen, falls benötigt
+        
         if (SelectedCourtId.HasValue)
         {
             var selectedCourt = await context.Court.FindAsync(SelectedCourtId.Value);
