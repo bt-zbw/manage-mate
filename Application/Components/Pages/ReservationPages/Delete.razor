@@ -18,16 +18,24 @@
     }
     else {
         <dl class="row">
-            <dt class="col-sm-2">AccessCode</dt>
-            <dd class="col-sm-10">@reservation.AccessCode</dd>
-        </dl>
-        <dl class="row">
             <dt class="col-sm-2">Name</dt>
             <dd class="col-sm-10">@reservation.Name</dd>
         </dl>
         <dl class="row">
             <dt class="col-sm-2">Description</dt>
             <dd class="col-sm-10">@reservation.Description</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">From</dt>
+            <dd class="col-sm-10">@reservation.From</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">To</dt>
+            <dd class="col-sm-10">@reservation.To</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">AccessCode</dt>
+            <dd class="col-sm-10">@reservation.AccessCode</dd>
         </dl>
         <EditForm method="post" Model="reservation" OnValidSubmit="DeleteReservation" FormName="delete" Enhance>
             <button type="submit" class="btn btn-danger" disabled="@(reservation is null)">Delete</button> |

@@ -15,9 +15,11 @@
 </p>
 
 <QuickGrid Class="table" Items="context.Reservation">
-    <PropertyColumn Property="reservation => reservation.AccessCode" />
     <PropertyColumn Property="reservation => reservation.Name" />
     <PropertyColumn Property="reservation => reservation.Description" />
+    <PropertyColumn Property="reservation => reservation.From" />
+    <PropertyColumn Property="reservation => reservation.To" />
+    <PropertyColumn Property="reservation => reservation.AccessCode" />
 
     <TemplateColumn Context="reservation">
         <a href="@($"reservations/edit?id={reservation.Id}")">Edit</a> |

@@ -14,16 +14,27 @@
     <div class="col-md-4">
         <EditForm method="post" Model="Court" OnValidSubmit="AddCourt" FormName="create" Enhance>
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert"/>
+            <ValidationSummary class="text-danger" role="alert" />
             <div class="mb-3">
-                <label for="number" class="form-label">Number:</label> 
-                <InputNumber id="number" @bind-Value="Court.Number" class="form-control" /> 
-                <ValidationMessage For="() => Court.Number" class="text-danger" /> 
-            </div>        
+                <label for="number" class="form-label">Number:</label>
+                <InputNumber id="number" @bind-Value="Court.Number" class="form-control" />
+                <ValidationMessage For="() => Court.Number" class="text-danger" />
+            </div>
             <div class="mb-3">
-                <label for="name" class="form-label">Name:</label> 
-                <InputText id="name" @bind-Value="Court.Name" class="form-control" /> 
-                <ValidationMessage For="() => Court.Name" class="text-danger" /> 
+                <label for="name" class="form-label">Name:</label>
+                <InputText id="name" @bind-Value="Court.Name" class="form-control" />
+                <ValidationMessage For="() => Court.Name" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="hallid" class="form-label">Hall:</label>
+                <InputSelect id="hallid" class="form-control" @bind-Value="Court.HallId">
+                    <option value="">Select a hall</option>
+                    @foreach (var hall in Halls)
+                    {
+                        <option value="@hall.Id">@hall.Name</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="() => Court.HallId" class="text-danger" />
             </div>
             <button type="submit" class="btn btn-primary">Create</button>
         </EditForm>
@@ -38,7 +49,14 @@
     [SupplyParameterFromForm]
     private Court Court { get; set; } = new();
 
-    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private List<Hall> Halls { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Halls = await context.Hall.ToListAsync();
+    }
+
     private async Task AddCourt()
     {
         using var context = DbFactory.CreateDbContext();

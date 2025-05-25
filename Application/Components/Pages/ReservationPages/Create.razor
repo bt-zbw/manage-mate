@@ -11,44 +11,170 @@
 <h2>Reservation</h2>
 <hr />
 <div class="row">
-    <div class="col-md-4">
-        <EditForm method="post" Model="Reservation" OnValidSubmit="AddReservation" FormName="create" Enhance>
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert"/>
-            <div class="mb-3">
-                <label for="accesscode" class="form-label">AccessCode:</label> 
-                <InputText id="accesscode" @bind-Value="Reservation.AccessCode" class="form-control" /> 
-                <ValidationMessage For="() => Reservation.AccessCode" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="name" class="form-label">Name:</label> 
-                <InputText id="name" @bind-Value="Reservation.Name" class="form-control" /> 
-                <ValidationMessage For="() => Reservation.Name" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="description" class="form-label">Description:</label> 
-                <InputText id="description" @bind-Value="Reservation.Description" class="form-control" /> 
-                <ValidationMessage For="() => Reservation.Description" class="text-danger" /> 
-            </div>        
-            <button type="submit" class="btn btn-primary">Create</button>
-        </EditForm>
-    </div>
+	<div class="col-md-4">
+		<EditForm method="post" Model="Reservation" OnValidSubmit="AddReservation" FormName="create" Enhance>
+			<DataAnnotationsValidator />
+			<ValidationSummary class="text-danger" role="alert" />
+			<div class="mb-3">
+				<label for="name" class="form-label">Name:</label>
+				<InputText id="name" @bind-Value="Reservation.Name" class="form-control" />
+				<ValidationMessage For="() => Reservation.Name" class="text-danger" />
+			</div>
+			<div class="mb-3">
+				<label for="description" class="form-label">Description:</label>
+				<InputText id="description" @bind-Value="Reservation.Description" class="form-control" />
+				<ValidationMessage For="() => Reservation.Description" class="text-danger" />
+			</div>
+
+			<div class="mb-3">
+				<label for="from" class="form-label">From:</label>
+				<input type="datetime-local" class="form-control"
+				@bind="Reservation.From"
+				@bind:format="yyyy-MM-ddTHH:mm" />
+			</div>
+			<div class="mb-3">
+				<label for="to" class="form-label">To:</label>
+				<input type="datetime-local" class="form-control"
+				@bind="Reservation.To"
+				@bind:format="yyyy-MM-ddTHH:mm" />
+			</div>
+			<div class="mb-3">
+				<label for="hall" class="form-label">Hall:</label>
+				<InputSelect id="hall" class="form-control" @bind-Value="SelectedHallId" @onchange="OnHallChanged">
+					<option value="">Select a hall</option>
+					@foreach (var hall in Halls)
+					{
+						<option value="@hall.Id">@($"{hall.Name} - {hall.Address?.Street}, {hall.Address?.City}")</option>
+					}
+				</InputSelect>
+			</div>
+			<div class="mb-3">
+				<label for="court" class="form-label">Court:</label>
+				<InputSelect id="court" class="form-control" @bind-Value="SelectedCourtId" @onchange="OnCourtChanged">
+					<option value="">Select a court</option>
+					@foreach (var court in Courts)
+					{
+						<option value="@court.Id">@($"{court.Name} - {court.Number}")</option>
+					}
+				</InputSelect>
+				<ValidationMessage For="() => SelectedCourtId" class="text-danger" />
+			</div>
+			<div class="mb-3">
+				<label for="user" class="form-label">User:</label>
+				<InputSelect id="user" class="form-control" @bind-Value="SelectedUserId">
+					<option value="">Select a user</option>
+					@foreach (var user in Users)
+					{
+						<option value="@user.Id">@($"{user.Firstname} {user.Lastname} ({user.Email})")</option>
+					}
+				</InputSelect>
+				<ValidationMessage For="() => SelectedUserId" class="text-danger" />
+			</div>
+			<div class="mb-3">
+				<label for="accesscode" class="form-label">AccessCode:</label>
+				<InputText id="accesscode" @bind-Value="Reservation.AccessCode" class="form-control" readonly />
+				<ValidationMessage For="() => Reservation.AccessCode" class="text-danger" />
+			</div>
+			<button type="submit" class="btn btn-primary">Create</button>
+		</EditForm>
+	</div>
 </div>
 
 <div>
-    <a href="/reservations">Back to List</a>
+	<a href="/reservations">Back to List</a>
 </div>
 
 @code {
-    [SupplyParameterFromForm]
-    private Reservation Reservation { get; set; } = new();
+	[SupplyParameterFromForm]
+	private Reservation Reservation { get; set; } = new();
 
-    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
-    private async Task AddReservation()
-    {
-        using var context = DbFactory.CreateDbContext();
-        context.Reservation.Add(Reservation);
-        await context.SaveChangesAsync();
-        NavigationManager.NavigateTo("/reservations");
-    }
+	private List<Hall> Halls { get; set; } = new();
+	private List<Court> Courts { get; set; } = new();
+	private List<User> Users { get; set; } = new();
+
+	private Guid? SelectedHallId { get; set; }
+	private Hall? SelectedHall => Halls.FirstOrDefault(h => h.Id == SelectedHallId);
+	private List<Court> FilteredCourts => Courts.Where(c => c.HallId == SelectedHallId).ToList();
+	private Guid? SelectedCourtId { get; set; }
+	private Guid? SelectedUserId { get; set; }
+
+	protected override async Task OnInitializedAsync()
+	{
+		using var context = DbFactory.CreateDbContext();
+		Halls = await context.Hall.Include(h => h.Address).ToListAsync();
+		Courts = await context.Court.ToListAsync();
+		Users = await context.User.ToListAsync();
+
+		// Generate a 6-digit access code if not already set
+		if (string.IsNullOrWhiteSpace(Reservation.AccessCode))
+		{
+			Reservation.AccessCode = GenerateAccessCode();
+		}
+	}
+
+	private static string GenerateAccessCode()
+	{
+		var random = new Random();
+		return random.Next(100000, 1000000).ToString();
+	}
+
+	private void OnHallChanged(ChangeEventArgs e)
+	{
+		if (Guid.TryParse(e.Value?.ToString(), out var hallId))
+		{
+			SelectedHallId = hallId;
+			SelectedCourtId = null;
+		}
+		else
+		{
+			SelectedHallId = null;
+			SelectedCourtId = null;
+		}
+	}
+
+	private void OnCourtChanged(ChangeEventArgs e)
+	{
+		if (Guid.TryParse(e.Value?.ToString(), out var courtId))
+		{
+			SelectedCourtId = courtId;
+			SelectedHallId = null;
+		}
+		else
+		{
+			SelectedCourtId = null;
+			SelectedHallId = null;
+		}
+	}
+
+	private async Task AddReservation()
+	{
+		using var context = DbFactory.CreateDbContext();
+
+		// Set selected halls and courts
+		Reservation.Halls = SelectedHallId.HasValue
+			? new List<Hall> { await context.Hall.FindAsync(SelectedHallId.Value) }
+			: new List<Hall>();
+
+		Reservation.Courts = new List<Court>();
+		if (SelectedCourtId.HasValue)
+		{
+			var court = await context.Court.FindAsync(SelectedCourtId.Value);
+			if (court != null)
+				Reservation.Courts.Add(court);
+		}
+
+		// Set the selected user
+		Reservation.Users = new List<User>();
+		if (SelectedUserId.HasValue)
+		{
+			var user = await context.User.FindAsync(SelectedUserId.Value);
+			if (user != null)
+				Reservation.Users.Add(user);
+		}
+
+		context.Reservation.Add(Reservation);
+		await context.SaveChangesAsync();
+		NavigationManager.NavigateTo("/reservations");
+	}
+	
 }
