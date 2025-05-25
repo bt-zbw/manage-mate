@@ -1,14 +1,12 @@
-﻿@page "/reservations/edit"
+﻿@page "/reservations/edit/{Id:guid}"
 @using Microsoft.EntityFrameworkCore
 @using Application.Models
 @inject IDbContextFactory<Application.Database.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
 
-<PageTitle>Edit</PageTitle>
+<PageTitle>Edit Reservation</PageTitle>
 
-<h1>Edit</h1>
-
-<h2>Reservation</h2>
+<h1>Edit Reservation</h1>
 <hr />
 @if (Reservation is null)
 {
@@ -17,16 +15,13 @@
 else
 {
     <div class="row">
-        <div class="col-md-4">
-            <EditForm method="post" Model="Reservation" OnValidSubmit="UpdateReservation" FormName="edit" Enhance>
+        <div class="col-md-6">
+            <EditForm Model="Reservation" OnValidSubmit="UpdateReservation" FormName="reservation-edit">
                 <DataAnnotationsValidator />
-                <ValidationSummary role="alert"/>
+                <ValidationSummary class="text-danger" role="alert" />
+
                 <input type="hidden" name="Reservation.Id" value="@Reservation.Id" />
-                <div class="mb-3">
-                    <label for="accesscode" class="form-label">AccessCode:</label>
-                    <InputText id="accesscode" @bind-Value="Reservation.AccessCode" class="form-control" />
-                    <ValidationMessage For="() => Reservation.AccessCode" class="text-danger" />
-                </div>
+
                 <div class="mb-3">
                     <label for="name" class="form-label">Name:</label>
                     <InputText id="name" @bind-Value="Reservation.Name" class="form-control" />
@@ -37,63 +32,177 @@ else
                     <InputText id="description" @bind-Value="Reservation.Description" class="form-control" />
                     <ValidationMessage For="() => Reservation.Description" class="text-danger" />
                 </div>
+                <div class="mb-3">
+                    <label for="from" class="form-label">From:</label>
+                    <InputDate id="from" @bind-Value="Reservation.From" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label for="to" class="form-label">To:</label>
+                    <InputDate id="to" @bind-Value="Reservation.To" class="form-control" />
+                </div>
+                <div class="mb-3">
+                    <label for="hall" class="form-label">Hall:</label>
+                    <InputSelect id="hall" class="form-control" @bind-Value="SelectedHallId" @onchange="OnHallChanged">
+                        <option value="">Select a hall</option>
+                        @foreach (var hall in Halls)
+                        {
+                            <option value="@hall.Id">@($"{hall.Address?.Street}, {hall.Address?.City}")</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div class="mb-3">
+                    <label for="court" class="form-label">Court:</label>
+                    <InputSelect id="court" class="form-control" @bind-Value="SelectedCourtId" disabled="@(SelectedHall == null || !FilteredCourts.Any())">
+                        <option value="">Select a court</option>
+                        @foreach (var court in FilteredCourts)
+                        {
+                            <option value="@court.Id">@($"{court.Name} - {court.Number}")</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => SelectedCourtId" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="user" class="form-label">User:</label>
+                    <InputSelect id="user" class="form-control" @bind-Value="SelectedUserId">
+                        <option value="">Select a user</option>
+                        @foreach (var user in Users)
+                        {
+                            <option value="@user.Id">@($"{user.Firstname} {user.Lastname} ({user.Email})")</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => SelectedUserId" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="accesscode" class="form-label">Access Code:</label>
+                    <InputText id="accesscode" @bind-Value="Reservation.AccessCode" class="form-control" readonly />
+                </div>
                 <button type="submit" class="btn btn-primary">Save</button>
             </EditForm>
         </div>
     </div>
 }
-
 <div>
     <a href="/reservations">Back to List</a>
 </div>
 
 @code {
-    [SupplyParameterFromQuery]
-    private Guid Id { get; set; }
+    [Parameter]
+    public Guid Id { get; set; }
 
-    [SupplyParameterFromForm]
     private Reservation? Reservation { get; set; }
+
+    private List<Hall> Halls { get; set; } = new();
+    private List<Court> Courts { get; set; } = new();
+    private List<User> Users { get; set; } = new();
+
+    private Guid? SelectedHallId { get; set; }
+    private Hall? SelectedHall => Halls.FirstOrDefault(h => h.Id == SelectedHallId);
+    private List<Court> FilteredCourts => Courts.Where(c => c.HallId == SelectedHallId).ToList();
+    private Guid? SelectedCourtId { get; set; }
+    private Guid? SelectedUserId { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
-        Reservation ??= await context.Reservation.FirstOrDefaultAsync(m => m.Id == Id);
+        Halls = await context.Hall.Include(h => h.Address).ToListAsync();
+        Courts = await context.Court.ToListAsync();
+        Users = await context.User.ToListAsync();
+
+        Reservation = await context.Reservation
+            .Include(r => r.Halls)
+            .Include(r => r.Courts)
+            .Include(r => r.Users)
+            .FirstOrDefaultAsync(r => r.Id == Id);
 
         if (Reservation is null)
         {
-            NavigationManager.NavigateTo("notfound");
+            NavigationManager.NavigateTo("/notfound");
+            return;
+        }
+
+        // Generate a 6-digit access code if not already set (should not happen in normal edit)
+        if (string.IsNullOrWhiteSpace(Reservation.AccessCode))
+        {
+            Reservation.AccessCode = GenerateAccessCode();
+        }
+
+        SelectedHallId = Reservation.Halls.FirstOrDefault()?.Id;
+        SelectedCourtId = Reservation.Courts.FirstOrDefault()?.Id;
+        SelectedUserId = Reservation.Users.FirstOrDefault()?.Id;
+    }
+
+    private static string GenerateAccessCode()
+    {
+        var random = new Random();
+        return random.Next(100000, 1000000).ToString();
+    }
+
+    private void OnHallChanged(ChangeEventArgs e)
+    {
+        if (Guid.TryParse(e.Value?.ToString(), out var hallId))
+        {
+            SelectedHallId = hallId;
+            SelectedCourtId = null;
+        }
+        else
+        {
+            SelectedHallId = null;
+            SelectedCourtId = null;
         }
     }
 
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
     private async Task UpdateReservation()
     {
         using var context = DbFactory.CreateDbContext();
-        context.Attach(Reservation!).State = EntityState.Modified;
 
-        try
+        var reservation = await context.Reservation
+            .Include(r => r.Halls)
+            .Include(r => r.Courts)
+            .Include(r => r.Users)
+            .FirstOrDefaultAsync(r => r.Id == Id);
+
+        if (reservation is null)
         {
-            await context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!ReservationExists(Reservation!.Id))
-            {
-                NavigationManager.NavigateTo("notfound");
-            }
-            else
-            {
-                throw;
-            }
+            NavigationManager.NavigateTo("/notfound");
+            return;
         }
 
+        // Update fields
+        reservation.Name = Reservation!.Name;
+        reservation.Description = Reservation.Description;
+        reservation.From = Reservation.From;
+        reservation.To = Reservation.To;
+
+        // Update Hall
+        reservation.Halls.Clear();
+        if (SelectedHallId.HasValue)
+        {
+            var hall = await context.Hall.FindAsync(SelectedHallId.Value);
+            if (hall != null)
+                reservation.Halls.Add(hall);
+        }
+
+        // Update Court
+        reservation.Courts.Clear();
+        if (SelectedCourtId.HasValue)
+        {
+            var court = await context.Court.FindAsync(SelectedCourtId.Value);
+            if (court != null)
+                reservation.Courts.Add(court);
+        }
+
+        // Update User
+        reservation.Users.Clear();
+        if (SelectedUserId.HasValue)
+        {
+            var user = await context.User.FindAsync(SelectedUserId.Value);
+            if (user != null)
+                reservation.Users.Add(user);
+        }
+
+        // AccessCode is readonly and not changed
+
+        await context.SaveChangesAsync();
         NavigationManager.NavigateTo("/reservations");
-    }
-
-    private bool ReservationExists(Guid id)
-    {
-        using var context = DbFactory.CreateDbContext();
-        return context.Reservation.Any(e => e.Id == id);
     }
 }

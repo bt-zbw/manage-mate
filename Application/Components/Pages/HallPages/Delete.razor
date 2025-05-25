@@ -17,6 +17,14 @@
         <p><em>Loading...</em></p>
     }
     else {
+        <dl class="row">
+            <dt class="col-sm-2">Name</dt>
+            <dd class="col-sm-10">@hall.Name</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">AddressId</dt>
+            <dd class="col-sm-10">@hall.AddressId</dd>
+        </dl>
         <EditForm method="post" Model="hall" OnValidSubmit="DeleteHall" FormName="delete" Enhance>
             <button type="submit" class="btn btn-danger" disabled="@(hall is null)">Delete</button> |
             <a href="/halls">Back to List</a>

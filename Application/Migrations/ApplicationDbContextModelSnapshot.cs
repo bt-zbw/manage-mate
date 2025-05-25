@@ -51,7 +51,7 @@ namespace Application.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("HallId")
+                    b.Property<Guid>("HallId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Name")
@@ -60,9 +60,12 @@ namespace Application.Migrations
                     b.Property<int>("Number")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("ReservationId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("HallId");
+                    b.HasIndex("ReservationId");
 
                     b.ToTable("Court");
                 });
@@ -76,9 +79,23 @@ namespace Application.Migrations
                     b.Property<Guid>("AddressId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("CourtId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("ReservationId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AddressId");
+
+                    b.HasIndex("CourtId");
+
+                    b.HasIndex("ReservationId");
 
                     b.ToTable("Hall");
                 });
@@ -93,57 +110,23 @@ namespace Application.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid>("CourtId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CreatedById")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid>("HallId")
-                        .HasColumnType("uuid");
+                    b.Property<DateTime>("From")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid>("TimeslotId")
-                        .HasColumnType("uuid");
+                    b.Property<DateTime>("To")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CourtId");
-
-                    b.HasIndex("CreatedById");
-
-                    b.HasIndex("HallId");
-
-                    b.HasIndex("TimeslotId");
 
                     b.ToTable("Reservation");
-                });
-
-            modelBuilder.Entity("Application.Models.Timeslot", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date");
-
-                    b.Property<TimeOnly>("TimeFrom")
-                        .HasColumnType("time without time zone");
-
-                    b.Property<TimeOnly>("TimeTo")
-                        .HasColumnType("time without time zone");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Timeslot");
                 });
 
             modelBuilder.Entity("Application.Models.User", b =>
@@ -184,9 +167,9 @@ namespace Application.Migrations
 
             modelBuilder.Entity("Application.Models.Court", b =>
                 {
-                    b.HasOne("Application.Models.Hall", null)
+                    b.HasOne("Application.Models.Reservation", null)
                         .WithMany("Courts")
-                        .HasForeignKey("HallId");
+                        .HasForeignKey("ReservationId");
                 });
 
             modelBuilder.Entity("Application.Models.Hall", b =>
@@ -197,42 +180,15 @@ namespace Application.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Application.Models.Court", null)
+                        .WithMany("Halls")
+                        .HasForeignKey("CourtId");
+
+                    b.HasOne("Application.Models.Reservation", null)
+                        .WithMany("Halls")
+                        .HasForeignKey("ReservationId");
+
                     b.Navigation("Address");
-                });
-
-            modelBuilder.Entity("Application.Models.Reservation", b =>
-                {
-                    b.HasOne("Application.Models.Court", "Court")
-                        .WithMany()
-                        .HasForeignKey("CourtId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Application.Models.User", "CreatedBy")
-                        .WithMany()
-                        .HasForeignKey("CreatedById")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Application.Models.Hall", "Hall")
-                        .WithMany()
-                        .HasForeignKey("HallId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Application.Models.Timeslot", "Timeslot")
-                        .WithMany()
-                        .HasForeignKey("TimeslotId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Court");
-
-                    b.Navigation("CreatedBy");
-
-                    b.Navigation("Hall");
-
-                    b.Navigation("Timeslot");
                 });
 
             modelBuilder.Entity("Application.Models.User", b =>
@@ -250,13 +206,17 @@ namespace Application.Migrations
                     b.Navigation("Address");
                 });
 
-            modelBuilder.Entity("Application.Models.Hall", b =>
+            modelBuilder.Entity("Application.Models.Court", b =>
                 {
-                    b.Navigation("Courts");
+                    b.Navigation("Halls");
                 });
 
             modelBuilder.Entity("Application.Models.Reservation", b =>
                 {
+                    b.Navigation("Courts");
+
+                    b.Navigation("Halls");
+
                     b.Navigation("Users");
                 });
 #pragma warning restore 612, 618

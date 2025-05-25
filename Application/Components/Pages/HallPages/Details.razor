@@ -17,6 +17,10 @@
     }
     else {
         <dl class="row">
+            <dt class="col-sm-2">Name</dt>
+            <dd class="col-sm-10">@hall.Name</dd>
+            <dt class="col-sm-2">AddressId</dt>
+            <dd class="col-sm-10">@hall.AddressId</dd>
         </dl>
         <div>
             <a href="@($"/halls/edit?id={hall.Id}")">Edit</a> |
