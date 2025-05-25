@@ -6,6 +6,7 @@ namespace Application.Models {
         public Hall Hall { get; set; }
         public List<Reservation> Reservations { get; set; }
         public Dictionary<System.DayOfWeek, Timeslot> StandardOpeningHours { get; set; }
+        public DateTime? LastUpdated { get; set; }
         public List<Timeslot> SpecialOpeningHours { get; set; }
     }
 }

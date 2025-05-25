@@ -12,9 +12,33 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <EditForm method="post" Model="Hall" OnValidSubmit="AddHall" FormName="create" Enhance>
+        <EditForm Model="@Hall" OnValidSubmit="AddHall" FormName="createHall" method="post" Enhance>
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert"/>
+            
+            <div class="mb-3">
+                <label for="address" class="form-label">Address:</label>
+                <InputSelect id="address" @bind-Value="Hall.Address.Id" class="form-control">
+                    <option value="">Select an address</option>
+                    @foreach (var address in Addresses)
+                    {
+                        <option value="@address.Id">@($"{address.Street}, {address.City}, {address.Country}")</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="() => Hall.Address.Id" class="text-danger" />
+            </div>
+            
+            <div class="mb-3">
+                <label for="courts" class="form-label">Courts:</label>
+                <InputSelect id="courts" @bind-Value="SelectedCourtId" class="form-control">
+                    <option value="">Select a court</option>
+                    @foreach (var court in Courts)
+                    {
+                        <option value="@court.Id">@($"{court.Name} - {court.Number}")</option>
+                    }
+                </InputSelect>
+            </div>
+            
             <button type="submit" class="btn btn-primary">Create</button>
         </EditForm>
     </div>
@@ -24,14 +48,41 @@
     <a href="/halls">Back to List</a>
 </div>
 
-@code {
-    [SupplyParameterFromForm]
-    private Hall Hall { get; set; } = new();
 
-    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+
+@code {
+    private List<Address> Addresses { get; set; } = new();
+    private Hall Hall { get; set; } = new()
+    {
+        Id = Guid.NewGuid(),
+        Address = new Address(),
+        Courts = new List<Court>()
+    };
+
+    private List<Court> Courts { get; set; } = new();
+    private Guid? SelectedCourtId { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Courts = await context.Court.ToListAsync();
+    }
+
     private async Task AddHall()
     {
         using var context = DbFactory.CreateDbContext();
+        
+        if (SelectedCourtId.HasValue)
+        {
+            var selectedCourt = await context.Court.FindAsync(SelectedCourtId.Value);
+            if (selectedCourt != null)
+            {
+                Hall.Courts ??= new List<Court>();
+                Hall.Courts.Add(selectedCourt);
+            }
+        }
+
         context.Hall.Add(Hall);
         await context.SaveChangesAsync();
         NavigationManager.NavigateTo("/halls");

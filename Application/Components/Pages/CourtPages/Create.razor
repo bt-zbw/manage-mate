@@ -20,6 +20,11 @@
                 <InputNumber id="number" @bind-Value="Court.Number" class="form-control" /> 
                 <ValidationMessage For="() => Court.Number" class="text-danger" /> 
             </div>        
+            <div class="mb-3">
+                <label for="name" class="form-label">Name:</label> 
+                <InputText id="name" @bind-Value="Court.Name" class="form-control" /> 
+                <ValidationMessage For="() => Court.Name" class="text-danger" /> 
+            </div>
             <button type="submit" class="btn btn-primary">Create</button>
         </EditForm>
     </div>

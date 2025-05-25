@@ -25,4 +25,12 @@
     <Folder Include="Migrations\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="Components\Pages\ContactPages\Create.razor" />
+    <_ContentIncludedByDefault Remove="Components\Pages\ContactPages\Delete.razor" />
+    <_ContentIncludedByDefault Remove="Components\Pages\ContactPages\Details.razor" />
+    <_ContentIncludedByDefault Remove="Components\Pages\ContactPages\Edit.razor" />
+    <_ContentIncludedByDefault Remove="Components\Pages\ContactPages\Index.razor" />
+  </ItemGroup>
+
 </Project>
