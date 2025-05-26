@@ -1,0 +1,46 @@
+﻿@page "/sensor"
+@using Application.Models
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+
+<PageTitle>Sensors</PageTitle>
+
+<h1>Sensors</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Topic</th>
+            <th>Value</th>
+            <th></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var lightSensor in lightSensors) {
+            <tr>
+                <td>@lightSensor.Name</td>
+                <td>@lightSensor.Status</td>
+                <td><button class="btn btn-primary" @onclick="() => TurnLightOn(lightSensor)">Turn On</button></td>
+                <td><button class="btn btn-primary" @onclick="() => TurnLightOff(lightSensor)">Turn Off</button></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<LightSensor> lightSensors;
+
+    protected override void OnInitialized()
+    {
+        lightSensors = MqttController.Controller.GetLights();
+    }
+    private void TurnLightOn(LightSensor light)
+    {
+        light.TurnOnLight();
+    }
+    private void TurnLightOff(LightSensor light)
+    {
+        light.TurnOffLight();
+    } 
+}

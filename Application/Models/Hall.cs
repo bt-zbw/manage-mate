@@ -3,6 +3,5 @@
         public Guid Id { get; set; }
         public Address Address { get; set; }
         public List<Court> Courts { get; set; }
-        public MqttController MqttController { get; set; }
     }
 }

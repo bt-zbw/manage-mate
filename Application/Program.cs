@@ -1,5 +1,6 @@
 ﻿using Application.Components;
 using Application.Database;
+using Application.Models;
 using Microsoft.EntityFrameworkCore;
 using MQTTnet;
 
@@ -38,8 +39,10 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();
 
-
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+MqttController.IninalizeMqttController("");
+MqttController.Controller.AddLightSensor("test/light");
 
 app.Run();
