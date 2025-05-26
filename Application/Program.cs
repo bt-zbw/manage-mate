@@ -38,19 +38,6 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();
 
-//Connecting to MQTT Broker
-var mqttFactory = new MqttClientFactory();
-var mqttClient = mqttFactory.CreateMqttClient();
-var mqttClientOptions = new MqttClientOptionsBuilder().WithTcpServer("192.168.10.20").Build();
-await mqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
-
-var applicationMessage = new MqttApplicationMessageBuilder()
-    .WithTopic("samples/temperature/living_room")
-    .WithPayload("19.5")
-    .Build();
-
-await mqttClient.PublishAsync(applicationMessage, CancellationToken.None);
-
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
