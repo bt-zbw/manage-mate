@@ -25,10 +25,10 @@
     <button type="submit" class="btn btn-primary">Prüfen</button>
 </EditForm>
 
-@if (!string.IsNullOrEmpty(ValidationMessage))
+<!-- @if (!string.IsNullOrEmpty(ValidationMessage))
 {
     <p>@ValidationMessage</p>
-}
+}-->
 
 @code {
     private ApplicationDbContext _context;
@@ -44,17 +44,66 @@
         Halls = _context.Hall.AsNoTracking().ToList();
         Courts = _context.Court.AsNoTracking().ToList();
     }
+    
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        
+        // Filtere Courts basierend auf der ausgewählten Halle
+        if (FormModel.SelectedHallId.HasValue)
+        {
+            Courts = _context.Court
+                .AsNoTracking()
+                .Where(c => c.HallId == FormModel.SelectedHallId.Value)
+                .ToList();
+        }
+    }
+
 
     private async Task HandleValidSubmit()
     {
         ValidationMessage = string.Empty;
 
-        if (string.IsNullOrWhiteSpace(FormModel.Code) || !FormModel.SelectedHallId.HasValue || !FormModel.SelectedCourtId.HasValue)
+        Console.WriteLine($"=== Debug-Informationen ===");
+        Console.WriteLine($"Code: '{FormModel.Code}'");
+        Console.WriteLine($"HallId: {FormModel.SelectedHallId}");
+        Console.WriteLine($"CourtId: {FormModel.SelectedCourtId}");
+
+        // Überprüfen wir auch die Datenbank-Abfrage
+        var allReservations = await _context.Reservation
+            .AsNoTracking()
+            .Include(r => r.Halls)
+            .Include(r => r.Courts)
+            .ToListAsync();
+
+        Console.WriteLine($"Anzahl Reservierungen in DB: {allReservations.Count}");
+        foreach (var res in allReservations)
         {
-            ValidationMessage = "Bitte Code, Halle und Platz auswählen.";
+            Console.WriteLine($"Reservation: Code={res.AccessCode}, Halls={res.Halls?.Count ?? 0}, Courts={res.Courts?.Count ?? 0}");
+        }
+
+
+        if (string.IsNullOrWhiteSpace(FormModel.Code))
+        {
+            ValidationMessage = "Bitte geben Sie einen Code ein. - Code is null or empty";
             return;
         }
 
+        if (!FormModel.SelectedHallId.HasValue)
+        {
+            ValidationMessage = "Bitte wählen Sie eine Halle aus.";
+            return;
+        }
+
+        if (!FormModel.SelectedCourtId.HasValue)
+        {
+            ValidationMessage = "Bitte wählen Sie einen Platz aus.";
+            return;
+        }
+
+
+        var currentTime = DateTime.Now;
+    
         var reservation = await _context.Reservation
             .AsNoTracking()
             .Include(r => r.Halls)
@@ -62,17 +111,40 @@
             .FirstOrDefaultAsync(r =>
                 r.AccessCode == FormModel.Code &&
                 r.Halls.Any(h => h.Id == FormModel.SelectedHallId.Value) &&
-                r.Courts.Any(c => c.Id == FormModel.SelectedCourtId.Value)
+                r.Courts.Any(c => c.Id == FormModel.SelectedCourtId.Value) &&
+                r.From <= currentTime &&
+                r.To >= currentTime
             );
 
         if (reservation == null)
         {
-            ValidationMessage = "Keine passende Reservierung für diesen Code, Halle und Platz gefunden.";
+            var existingReservation = await _context.Reservation
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.AccessCode == FormModel.Code);
+
+            if (existingReservation == null)
+            {
+                ValidationMessage = "Ungültiger Zugangscode.";
+            }
+            else if (existingReservation.From > currentTime)
+            {
+                ValidationMessage = "Die Reservierung ist erst ab " + 
+                                    existingReservation.From.ToString("dd.MM.yyyy HH:mm") + " gültig.";
+            }
+            else if (existingReservation.To < currentTime)
+            {
+                ValidationMessage = "Die Reservierung ist bereits abgelaufen.";
+            }
+            else
+            {
+                ValidationMessage = "Keine passende Reservierung für diese Halle und diesen Platz gefunden.";
+            }
             return;
         }
 
         ValidationMessage = "Zutritt erfolgreich!";
     }
+
 
     public async ValueTask DisposeAsync() => await _context.DisposeAsync();
 }

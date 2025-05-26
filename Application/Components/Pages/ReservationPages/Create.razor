@@ -137,14 +137,15 @@
 		if (Guid.TryParse(e.Value?.ToString(), out var courtId))
 		{
 			SelectedCourtId = courtId;
-			SelectedHallId = null;
+			// Die folgende Zeile entfernen, da sie die HallId zurücksetzt
+			// SelectedHallId = null;
 		}
 		else
 		{
 			SelectedCourtId = null;
-			SelectedHallId = null;
 		}
 	}
+
 
 	private async Task AddReservation()
 	{
