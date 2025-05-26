@@ -1,0 +1,150 @@
+@page "/access"
+@using Application.Database
+@using Application.Models
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<Application.Database.ApplicationDbContext> DbFactory
+
+<h3>Zutritt Platz</h3>
+
+<EditForm Model="FormModel" OnValidSubmit="HandleValidSubmit" FormName="zutritt">
+    <InputText @bind-Value="FormModel.Code" placeholder="Code" class="form-control mb-2" />
+    <InputSelect @bind-Value="FormModel.SelectedHallId" class="form-control mb-2">
+        <option value="">Halle wählen</option>
+        @foreach (var hall in Halls)
+        {
+            <option value="@hall.Id">@hall.Name</option>
+        }
+    </InputSelect>
+    <InputSelect @bind-Value="FormModel.SelectedCourtId" class="form-control mb-2">
+        <option value="">Platz wählen</option>
+        @foreach (var court in Courts.Where(c => !FormModel.SelectedHallId.HasValue || c.HallId == FormModel.SelectedHallId))
+        {
+            <option value="@court.Id">@court.Name</option>
+        }
+    </InputSelect>
+    <button type="submit" class="btn btn-primary">Prüfen</button>
+</EditForm>
+
+<!-- @if (!string.IsNullOrEmpty(ValidationMessage))
+{
+    <p>@ValidationMessage</p>
+}-->
+
+@code {
+    private ApplicationDbContext _context;
+    private AccessFormModel FormModel { get; set; } = new();
+    public string ValidationMessage { get; set; } = string.Empty;
+
+    private List<Hall> Halls { get; set; } = new();
+    private List<Court> Courts { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        _context = DbFactory.CreateDbContext();
+        Halls = _context.Hall.AsNoTracking().ToList();
+        Courts = _context.Court.AsNoTracking().ToList();
+    }
+    
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        
+        // Filtere Courts basierend auf der ausgewählten Halle
+        if (FormModel.SelectedHallId.HasValue)
+        {
+            Courts = _context.Court
+                .AsNoTracking()
+                .Where(c => c.HallId == FormModel.SelectedHallId.Value)
+                .ToList();
+        }
+    }
+
+
+    private async Task HandleValidSubmit()
+    {
+        ValidationMessage = string.Empty;
+
+        Console.WriteLine($"=== Debug-Informationen ===");
+        Console.WriteLine($"Code: '{FormModel.Code}'");
+        Console.WriteLine($"HallId: {FormModel.SelectedHallId}");
+        Console.WriteLine($"CourtId: {FormModel.SelectedCourtId}");
+
+        // Überprüfen wir auch die Datenbank-Abfrage
+        var allReservations = await _context.Reservation
+            .AsNoTracking()
+            .Include(r => r.Halls)
+            .Include(r => r.Courts)
+            .ToListAsync();
+
+        Console.WriteLine($"Anzahl Reservierungen in DB: {allReservations.Count}");
+        foreach (var res in allReservations)
+        {
+            Console.WriteLine($"Reservation: Code={res.AccessCode}, Halls={res.Halls?.Count ?? 0}, Courts={res.Courts?.Count ?? 0}");
+        }
+
+
+        if (string.IsNullOrWhiteSpace(FormModel.Code))
+        {
+            ValidationMessage = "Bitte geben Sie einen Code ein. - Code is null or empty";
+            return;
+        }
+
+        if (!FormModel.SelectedHallId.HasValue)
+        {
+            ValidationMessage = "Bitte wählen Sie eine Halle aus.";
+            return;
+        }
+
+        if (!FormModel.SelectedCourtId.HasValue)
+        {
+            ValidationMessage = "Bitte wählen Sie einen Platz aus.";
+            return;
+        }
+
+
+        var currentTime = DateTime.Now;
+    
+        var reservation = await _context.Reservation
+            .AsNoTracking()
+            .Include(r => r.Halls)
+            .Include(r => r.Courts)
+            .FirstOrDefaultAsync(r =>
+                r.AccessCode == FormModel.Code &&
+                r.Halls.Any(h => h.Id == FormModel.SelectedHallId.Value) &&
+                r.Courts.Any(c => c.Id == FormModel.SelectedCourtId.Value) &&
+                r.From <= currentTime &&
+                r.To >= currentTime
+            );
+
+        if (reservation == null)
+        {
+            var existingReservation = await _context.Reservation
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.AccessCode == FormModel.Code);
+
+            if (existingReservation == null)
+            {
+                ValidationMessage = "Ungültiger Zugangscode.";
+            }
+            else if (existingReservation.From > currentTime)
+            {
+                ValidationMessage = "Die Reservierung ist erst ab " + 
+                                    existingReservation.From.ToString("dd.MM.yyyy HH:mm") + " gültig.";
+            }
+            else if (existingReservation.To < currentTime)
+            {
+                ValidationMessage = "Die Reservierung ist bereits abgelaufen.";
+            }
+            else
+            {
+                ValidationMessage = "Keine passende Reservierung für diese Halle und diesen Platz gefunden.";
+            }
+            return;
+        }
+
+        ValidationMessage = "Zutritt erfolgreich!";
+    }
+
+
+    public async ValueTask DisposeAsync() => await _context.DisposeAsync();
+}
