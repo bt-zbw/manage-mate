@@ -14,7 +14,23 @@
     <div class="col-md-4">
         <EditForm method="post" Model="Hall" OnValidSubmit="AddHall" FormName="create" Enhance>
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert"/>
+            <ValidationSummary class="text-danger" role="alert" />
+            <div class="mb-3">
+                <label for="name" class="form-label">Name:</label>
+                <InputText id="name" @bind-Value="Hall.Name" class="form-control" />
+                <ValidationMessage For="() => Hall.Name" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="addressid" class="form-label">Address:</label>
+                <InputSelect id="addressid" class="form-control" @bind-Value="Hall.AddressId">
+                    <option value="">Select an address</option>
+                    @foreach (var address in Addresses)
+                    {
+                        <option value="@address.Id">@($"{address.Street}, {address.ZipCode} {address.City}, {address.Country}")</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="() => Hall.AddressId" class="text-danger" />
+            </div>
             <button type="submit" class="btn btn-primary">Create</button>
         </EditForm>
     </div>
@@ -28,7 +44,14 @@
     [SupplyParameterFromForm]
     private Hall Hall { get; set; } = new();
 
-    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private List<Address> Addresses { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Addresses = await context.Address.ToListAsync();
+    }
+
     private async Task AddHall()
     {
         using var context = DbFactory.CreateDbContext();
