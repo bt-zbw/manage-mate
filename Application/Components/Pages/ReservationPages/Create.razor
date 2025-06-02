@@ -85,8 +85,8 @@
 </div>
 
 @code {
-	[SupplyParameterFromForm]
-	private Reservation Reservation { get; set; } = new();
+		[SupplyParameterFromForm]
+		private Reservation Reservation { get; set; } = new();
 
 	private List<Hall> Halls { get; set; } = new();
 	private List<Court> Courts { get; set; } = new();
@@ -109,13 +109,15 @@
 		if (string.IsNullOrWhiteSpace(Reservation.AccessCode))
 		{
 			Reservation.AccessCode = GenerateAccessCode();
+			while (context.Reservation.Where(r => (r.AccessCode == Reservation.AccessCode) && (r.To < DateTime.UtcNow)).Count() > 0) {
+				Reservation.AccessCode = GenerateAccessCode();
+			}
 		}
 	}
 
-	private static string GenerateAccessCode()
-	{
+	private static string GenerateAccessCode() {
 		var random = new Random();
-		return random.Next(100000, 1000000).ToString();
+		return random.Next(100000, 999999).ToString();
 	}
 
 	private void OnHallChanged(ChangeEventArgs e)
