@@ -12,7 +12,6 @@ namespace Application.Models {
         private List<Sensor> _sensors = new List<Sensor>();
         public static MqttController Controller { get; private set; }
         private MqttController(string IP) {
-            IP = "192.168.10.20";
             this.IP = IP;
             //Connecting to MQTT Broker
             _factory = new MqttClientFactory();
@@ -37,6 +36,9 @@ namespace Application.Models {
 
         public async Task SubscribeToTopic (string topic, Action<string,Sensor> action, Sensor sensor) {
             _client.ApplicationMessageReceivedAsync += e => {
+                if (e.ApplicationMessage.Topic != topic) {
+                    return Task.CompletedTask;
+                }
                 Console.WriteLine(EncodingExtensions.GetString(Encoding.UTF8, e.ApplicationMessage.Payload));
                 action(EncodingExtensions.GetString(Encoding.UTF8, e.ApplicationMessage.Payload), sensor);
                 return Task.CompletedTask;
@@ -51,6 +53,11 @@ namespace Application.Models {
             _sensors.Add(sensor);
             return sensor;
         }
+        public TemperatureSensor AddTemperatureSensor(string topic) {
+            var sensor = new TemperatureSensor(topic, this);
+            _sensors.Add(sensor);
+            return sensor;
+        }
         public List<LightSensor> GetLights() {
             List<LightSensor> lightSensors = new List<LightSensor>();
             foreach (var sensor in _sensors) {
@@ -59,6 +66,15 @@ namespace Application.Models {
                 }
             }
             return lightSensors;
+        }
+        public List<TemperatureSensor> GetTemperatureSensors() {
+            List<TemperatureSensor> temperatureSensors = new List<TemperatureSensor>();
+            foreach (var sensor in _sensors) {
+                    if(sensor.GetType() == typeof(TemperatureSensor)) {
+                        temperatureSensors.Add(sensor as TemperatureSensor);
+                    }
+                }
+            return temperatureSensors;
         }
     }
 }
