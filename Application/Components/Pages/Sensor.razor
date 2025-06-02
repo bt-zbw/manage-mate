@@ -1,4 +1,4 @@
-﻿@page "/sensor"
+﻿@page "/sensors"
 @using Application.Models
 @attribute [StreamRendering]
 @rendermode InteractiveServer
@@ -7,6 +7,7 @@
 
 <h1>Sensors</h1>
 
+<h3>Lights</h3>
 <table class="table">
     <thead>
         <tr>
@@ -28,12 +29,35 @@
     </tbody>
 </table>
 
+<h3>Temperature / Humidity</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Topic</th>
+            <th>Temperature</th>
+            <th>Humidity</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var temperatureSensor in temperatureSensors) {
+            <tr>
+                <td>@temperatureSensor.Name</td>
+                <td>@temperatureSensor.Temperature</td>
+                <td>@temperatureSensor.Humidity</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
 @code {
     private List<LightSensor> lightSensors;
+    private List<TemperatureSensor> temperatureSensors;
 
     protected override void OnInitialized()
     {
         lightSensors = MqttController.Controller.GetLights();
+        temperatureSensors = MqttController.Controller.GetTemperatureSensors();
+        updateAfterDelay();
     }
     private void TurnLightOn(LightSensor light)
     {
@@ -43,4 +67,10 @@
     {
         light.TurnOffLight();
     } 
+    private async Task updateAfterDelay()
+    {
+        await Task.Delay(500);
+        StateHasChanged();
+        _ = updateAfterDelay();
+    }
 }

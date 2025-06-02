@@ -14,8 +14,8 @@ namespace Application.Models {
         public void WriteMessage(string message) {
             _ = _Controller.WriteMessage(Name, message);
         }
-        public void SubscribeToTopic(Action<string,Sensor> action) {
-            _ = _Controller.SubscribeToTopic(Name, action, this);
+        public void SubscribeToTopic(String field, Action<string,Sensor> action) {
+            _ = _Controller.SubscribeToTopic(Name + field, action, this);
         }
     }
 }

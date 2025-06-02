@@ -9,14 +9,14 @@ namespace Application.Models {
             Action<string,Sensor> updateStatus = (value, sensor) => {
                 sensor.GetType().GetProperty("Status").SetValue(sensor, value);
             };
-            SubscribeToTopic((Action<string, Sensor>)updateStatus);
+            SubscribeToTopic("/status", (Action<string, Sensor>)updateStatus);
         }
 
         public void TurnOnLight() {
-            _ = _Controller.WriteMessage(Name, "On");
+            _ = _Controller.WriteMessage(Name + "/status", "On");
         }
         public void TurnOffLight() {
-            _ = _Controller.WriteMessage(Name, "Off");
+            _ = _Controller.WriteMessage(Name + "/status", "Off");
         }
     }
 }
