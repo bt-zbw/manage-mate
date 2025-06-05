@@ -39,8 +39,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();
 
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
+app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
 MqttController.IninalizeMqttController("192.168.10.20");
 MqttController.Controller.AddLightSensor("light/1");
@@ -48,5 +47,6 @@ MqttController.Controller.AddLightSensor("light/2");
 MqttController.Controller.AddLightSensor("light/3");
 MqttController.Controller.AddTemperatureSensor("temperature/1");
 MqttController.Controller.AddTemperatureSensor("temperature/2");
+MqttController.Controller.AddDoorSensor("Door/1");
 
 app.Run();

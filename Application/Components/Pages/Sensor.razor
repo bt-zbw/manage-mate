@@ -22,8 +22,8 @@
             <tr>
                 <td>@lightSensor.Name</td>
                 <td>@lightSensor.Status</td>
-                <td><button class="btn btn-primary" @onclick="() => TurnLightOn(lightSensor)">Turn On</button></td>
-                <td><button class="btn btn-primary" @onclick="() => TurnLightOff(lightSensor)">Turn Off</button></td>
+                <td><button class="btn btn-primary" @onclick="() => lightSensor.TurnOnLight()">Turn On</button></td>
+                <td><button class="btn btn-primary" @onclick="() => lightSensor.TurnOffLight()">Turn Off</button></td>
             </tr>
         }
     </tbody>
@@ -49,24 +49,40 @@
     </tbody>
 </table>
 
+<h3>Doors</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Topic</th>
+            <th>Status</th>
+            <th></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var doorSensor in doorSensors) {
+            <tr>
+                <td>@doorSensor.Name</td>
+                <td>@doorSensor.Status</td>
+                <td><button class="btn btn-primary" @onclick="() => doorSensor.OpenDoor()">Open Door</button></td>
+                <td><button class="btn btn-primary" @onclick="() => doorSensor.CloseDoor()">Close Door</button></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
 @code {
     private List<LightSensor> lightSensors;
     private List<TemperatureSensor> temperatureSensors;
+    private List<DoorSensor> doorSensors;
 
     protected override void OnInitialized()
     {
         lightSensors = MqttController.Controller.GetLights();
         temperatureSensors = MqttController.Controller.GetTemperatureSensors();
+        doorSensors = MqttController.Controller.GetDoorSensors();
         updateAfterDelay();
     }
-    private void TurnLightOn(LightSensor light)
-    {
-        light.TurnOnLight();
-    }
-    private void TurnLightOff(LightSensor light)
-    {
-        light.TurnOffLight();
-    } 
     private async Task updateAfterDelay()
     {
         await Task.Delay(500);

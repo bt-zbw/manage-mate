@@ -1,11 +1,12 @@
-﻿using MQTTnet;
+﻿using Application.Components.Pages;
+using MQTTnet;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Application.Models {
     public class MqttController {
         public Guid Id { get; set; }
-        public string IP {  get; }
+        public string IP { get; }
         private readonly MqttClientFactory _factory;
         private readonly IMqttClient _client;
         private readonly MqttClientOptions _options;
@@ -34,7 +35,7 @@ namespace Application.Models {
             await _client.PublishAsync(applicationMessage, CancellationToken.None);
         }
 
-        public async Task SubscribeToTopic (string topic, Action<string,Sensor> action, Sensor sensor) {
+        public async Task SubscribeToTopic(string topic, Action<string, Sensor> action, Sensor sensor) {
             _client.ApplicationMessageReceivedAsync += e => {
                 if (e.ApplicationMessage.Topic != topic) {
                     return Task.CompletedTask;
@@ -58,6 +59,11 @@ namespace Application.Models {
             _sensors.Add(sensor);
             return sensor;
         }
+        public DoorSensor AddDoorSensor(string topic) {
+            var sensor = new DoorSensor(topic, this);
+            _sensors.Add(sensor);
+            return sensor;
+        }
         public List<LightSensor> GetLights() {
             List<LightSensor> lightSensors = new List<LightSensor>();
             foreach (var sensor in _sensors) {
@@ -70,11 +76,20 @@ namespace Application.Models {
         public List<TemperatureSensor> GetTemperatureSensors() {
             List<TemperatureSensor> temperatureSensors = new List<TemperatureSensor>();
             foreach (var sensor in _sensors) {
-                    if(sensor.GetType() == typeof(TemperatureSensor)) {
-                        temperatureSensors.Add(sensor as TemperatureSensor);
-                    }
+                if (sensor.GetType() == typeof(TemperatureSensor)) {
+                    temperatureSensors.Add(sensor as TemperatureSensor);
                 }
+            }
             return temperatureSensors;
+        }
+        public List<DoorSensor> GetDoorSensors() {
+            List<DoorSensor> doorSensors = new List<DoorSensor>();
+            foreach (var sensor in _sensors) {
+                if (sensor.GetType() == typeof(DoorSensor)) {
+                    doorSensors.Add(sensor as DoorSensor);
+                }
+            }
+            return doorSensors;
         }
     }
 }
