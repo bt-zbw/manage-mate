@@ -1,0 +1,14 @@
+﻿@page "/livestreams"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Application.Models
+@using Application.Database
+@inject IDbContextFactory<Application.Database.ApplicationDbContext> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Livestream</h1>
+
+<video width="640" height="360" controls autoplay>
+    <source src="http://10.30.1.11:8080/stream.m3u8" type="application/x-mpegURL" />
+</video>
