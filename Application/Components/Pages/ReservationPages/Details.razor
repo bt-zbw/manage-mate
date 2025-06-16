@@ -29,7 +29,7 @@
             <dd class="col-sm-10">@reservation.AccessCode</dd>
         </dl>
         <div>
-            <a href="@($"/reservations/edit?id={reservation.Id}")">Edit</a> |
+            <a href="@($"reservations/edit/{reservation.Id}")">Edit</a>  |
             <a href="@($"/reservations")">Back to List</a>
         </div>
     }

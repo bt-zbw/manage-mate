@@ -53,7 +53,7 @@
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
-        reservation = await context.Reservation.FirstOrDefaultAsync(m => m.Id == Id);
+        reservation = await context.Reservation.Include(r => r.Users).Include(r => r.Halls).Include(r => r.Courts).FirstOrDefaultAsync(m => m.Id == Id);
 
         if (reservation is null)
         {
@@ -64,6 +64,13 @@
     private async Task DeleteReservation()
     {
         using var context = DbFactory.CreateDbContext();
+        context.Attach(reservation!);
+        await context.Entry(reservation!).Collection(r => r.Users).LoadAsync();
+        await context.Entry(reservation!).Collection(r => r.Halls).LoadAsync();
+        await context.Entry(reservation!).Collection(r => r.Courts).LoadAsync();
+        reservation!.Users.Clear();
+        reservation!.Halls.Clear();
+        reservation!.Courts.Clear();
         context.Reservation.Remove(reservation!);
         await context.SaveChangesAsync();
         NavigationManager.NavigateTo("/reservations");

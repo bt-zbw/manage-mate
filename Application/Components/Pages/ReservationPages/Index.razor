@@ -22,7 +22,7 @@
     <PropertyColumn Property="reservation => reservation.AccessCode" />
 
     <TemplateColumn Context="reservation">
-        <a href="@($"reservations/edit?id={reservation.Id}")">Edit</a> |
+        <a href="@($"reservations/edit/{reservation.Id}")">Edit</a> |
         <a href="@($"reservations/details?id={reservation.Id}")">Details</a> |
         <a href="@($"reservations/delete?id={reservation.Id}")">Delete</a>
     </TemplateColumn>
