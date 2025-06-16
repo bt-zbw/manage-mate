@@ -16,7 +16,7 @@
             {
                 if (value.Minute != 0 || value.Second != 0 || value.Millisecond != 0)
                     throw new ArgumentException("Die Zeit muss im Stundenschritt angegeben werden (z. B. 10:00, 11:00).");
-                _from = value;
+                _from = value.ToUniversalTime();
             }
         }
 
@@ -29,7 +29,7 @@
                     throw new ArgumentException("Die Zeit muss im Stundenschritt angegeben werden (z. B. 10:00, 11:00).");
                 if (value < _from)
                     throw new ArgumentException("To darf nicht vor From liegen.");
-                _to = value;
+                _to = value.ToUniversalTime();
             }
         }
         public string AccessCode { get; set; }

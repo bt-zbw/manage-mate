@@ -3,6 +3,7 @@
 @using Application.Models
 @inject IDbContextFactory<Application.Database.ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
+@rendermode InteractiveServer
 
 <PageTitle>Create</PageTitle>
 
@@ -28,47 +29,40 @@
 
 			<div class="mb-3">
 				<label for="from" class="form-label">From:</label>
-				<input type="datetime-local" class="form-control"
-				@bind="Reservation.From"
-				@bind:format="yyyy-MM-ddTHH:mm" />
+				<InputDate id="from" @bind-Value="Reservation.From" class="form-control" Type="InputDateType.DateTimeLocal"></InputDate>
 			</div>
 			<div class="mb-3">
 				<label for="to" class="form-label">To:</label>
-				<input type="datetime-local" class="form-control"
-				@bind="Reservation.To"
-				@bind:format="yyyy-MM-ddTHH:mm" />
+				<InputDate id="to" @bind-Value="Reservation.To" class="form-control" Type="InputDateType.DateTimeLocal"></InputDate>
 			</div>
 			<div class="mb-3">
-				<label for="hall" class="form-label">Hall:</label>
-				<InputSelect id="hall" class="form-control" @bind-Value="SelectedHallId" @onchange="OnHallChanged">
-					<option value="">Select a hall</option>
+				<label for="halls">Hall:</label>
+				<select id="halls" class="form-control" @bind="selectedHallId" @bind:after="OnHallSelected">
+					<option value="@Guid.Empty">Select a hall</option>
 					@foreach (var hall in Halls)
 					{
 						<option value="@hall.Id">@($"{hall.Name} - {hall.Address?.Street}, {hall.Address?.City}")</option>
 					}
-				</InputSelect>
+				</select>
 			</div>
 			<div class="mb-3">
-				<label for="court" class="form-label">Court:</label>
-				<InputSelect id="court" class="form-control" @bind-Value="SelectedCourtId" @onchange="OnCourtChanged">
-					<option value="">Select a court</option>
+				<label for="courts">Court:</label>
+				<select id="courts" class="form-control" @bind="selectedCourtId" disabled="@(!hasSelectedHall)">
+					<option value="@Guid.Empty">Select a court</option>
 					@foreach (var court in Courts)
 					{
 						<option value="@court.Id">@($"{court.Name} - {court.Number}")</option>
 					}
-				</InputSelect>
-				<ValidationMessage For="() => SelectedCourtId" class="text-danger" />
+				</select>
 			</div>
 			<div class="mb-3">
-				<label for="user" class="form-label">User:</label>
-				<InputSelect id="user" class="form-control" @bind-Value="SelectedUserId">
-					<option value="">Select a user</option>
-					@foreach (var user in Users)
-					{
+				<label for="users">User:</label>
+				<select id="users" class="form-control" @bind="selectedUserId">
+					<option value="@Guid.Empty">Select a user</option>
+					@foreach (var user in Users) {
 						<option value="@user.Id">@($"{user.Firstname} {user.Lastname} ({user.Email})")</option>
 					}
-				</InputSelect>
-				<ValidationMessage For="() => SelectedUserId" class="text-danger" />
+				</select>
 			</div>
 			<div class="mb-3">
 				<label for="accesscode" class="form-label">AccessCode:</label>
@@ -85,24 +79,22 @@
 </div>
 
 @code {
-		[SupplyParameterFromForm]
-		private Reservation Reservation { get; set; } = new();
+	[SupplyParameterFromForm]
+	private Reservation Reservation { get; set; } = new();
 
-	private List<Hall> Halls { get; set; } = new();
-	private List<Court> Courts { get; set; } = new();
-	private List<User> Users { get; set; } = new();
-
-	private Guid? SelectedHallId { get; set; }
-	private Hall? SelectedHall => Halls.FirstOrDefault(h => h.Id == SelectedHallId);
-	private List<Court> FilteredCourts => Courts.Where(c => c.HallId == SelectedHallId).ToList();
-	private Guid? SelectedCourtId { get; set; }
-	private Guid? SelectedUserId { get; set; }
+	private List<Hall> Halls = new();
+	private List<Court> Courts = new();
+	private List<User> Users = new();
+	private Guid selectedHallId;
+	private Guid selectedCourtId;
+	private Guid selectedUserId;
+	private bool hasSelectedHall => selectedHallId != Guid.Empty;
 
 	protected override async Task OnInitializedAsync()
 	{
 		using var context = DbFactory.CreateDbContext();
 		Halls = await context.Hall.Include(h => h.Address).ToListAsync();
-		Courts = await context.Court.ToListAsync();
+		//Courts = await context.Court.ToListAsync();
 		Users = await context.User.ToListAsync();
 
 		// Generate a 6-digit access code if not already set
@@ -114,66 +106,30 @@
 			}
 		}
 	}
-
+	private async Task OnHallSelected()
+	{
+		Console.WriteLine("Hall Selected");
+		using var context = DbFactory.CreateDbContext();
+		Courts = await context.Court.Where(c => c.HallId == selectedHallId).ToListAsync();
+		selectedCourtId = Guid.Empty;
+	}
 	private static string GenerateAccessCode() {
 		var random = new Random();
 		return random.Next(100000, 999999).ToString();
 	}
-
-	private void OnHallChanged(ChangeEventArgs e)
-	{
-		if (Guid.TryParse(e.Value?.ToString(), out var hallId))
-		{
-			SelectedHallId = hallId;
-			SelectedCourtId = null;
-		}
-		else
-		{
-			SelectedHallId = null;
-			SelectedCourtId = null;
-		}
-	}
-
-	private void OnCourtChanged(ChangeEventArgs e)
-	{
-		if (Guid.TryParse(e.Value?.ToString(), out var courtId))
-		{
-			SelectedCourtId = courtId;
-			// Die folgende Zeile entfernen, da sie die HallId zurücksetzt
-			// SelectedHallId = null;
-		}
-		else
-		{
-			SelectedCourtId = null;
-		}
-	}
-
-
 	private async Task AddReservation()
 	{
+		Console.WriteLine(selectedHallId);
+		Console.WriteLine(selectedCourtId);
+		Console.WriteLine(selectedUserId);
 		using var context = DbFactory.CreateDbContext();
 
 		// Set selected halls and courts
-		Reservation.Halls = SelectedHallId.HasValue
-			? new List<Hall> { await context.Hall.FindAsync(SelectedHallId.Value) }
-			: new List<Hall>();
-
-		Reservation.Courts = new List<Court>();
-		if (SelectedCourtId.HasValue)
-		{
-			var court = await context.Court.FindAsync(SelectedCourtId.Value);
-			if (court != null)
-				Reservation.Courts.Add(court);
-		}
+		Reservation.Halls = selectedHallId != Guid.Empty ? await context.Hall.Where(h => h.Id == selectedHallId).ToListAsync() : new List<Hall>();
+		Reservation.Courts = selectedCourtId != Guid.Empty ? await context.Court.Where(c => c.Id == selectedCourtId).ToListAsync() : new List<Court>();
 
 		// Set the selected user
-		Reservation.Users = new List<User>();
-		if (SelectedUserId.HasValue)
-		{
-			var user = await context.User.FindAsync(SelectedUserId.Value);
-			if (user != null)
-				Reservation.Users.Add(user);
-		}
+		Reservation.Users = selectedUserId != Guid.Empty ? await context.User.Where(u => u.Id == selectedUserId).ToListAsync() : new List<User>();
 
 		context.Reservation.Add(Reservation);
 		await context.SaveChangesAsync();

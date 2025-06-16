@@ -47,6 +47,6 @@ MqttController.Controller.AddLightSensor("light/2");
 MqttController.Controller.AddLightSensor("light/3");
 MqttController.Controller.AddTemperatureSensor("temperature/1");
 MqttController.Controller.AddTemperatureSensor("temperature/2");
-MqttController.Controller.AddDoorSensor("Door/1");
+MqttController.Controller.AddDoorSensor("door/1");
 
 app.Run();
