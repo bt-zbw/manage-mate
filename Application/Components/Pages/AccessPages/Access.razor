@@ -103,6 +103,15 @@
 	}
 	private async Task CheckAccess()
 	{
-		//using var context = DbFactory.CreateDbContext();
+		using var context = DbFactory.CreateDbContext();
+		var reservations = await context.Reservation.Where(r => (r.Halls.Where(h => h.Id == selectedHallId).Count() > 0) && 
+																(r.Courts.Where(c => c.Id == selectedCourtId).Count() >0) &&
+																(r.AccessCode == accesscode)
+													).CountAsync();
+		if (reservations > 0)
+		{
+			var doors = MqttController.Controller.GetDoorSensors();
+			doors[0].OpenDoor();
+		}
 	}
 }
