@@ -14,9 +14,18 @@
     <a href="halls/create">Create New</a>
 </p>
 
-<QuickGrid Class="table" Items="context.Hall">
+<QuickGrid Class="table" Items="HallsQuery">
     <PropertyColumn Property="hall => hall.Name" />
-    <PropertyColumn Property="hall => hall.AddressId" />
+    <TemplateColumn Title="Address" Context="hall">
+        @if (hall.Address != null)
+        {
+            <span>@($"{hall.Address.Street}, {hall.Address.ZipCode} {hall.Address.City}, {hall.Address.Country}")</span>
+        }
+        else
+        {
+            <span>No address</span>
+        }
+    </TemplateColumn>
 
     <TemplateColumn Context="hall">
         <a href="@($"halls/edit?id={hall.Id}")">Edit</a> |
@@ -27,10 +36,12 @@
 
 @code {
     private ApplicationDbContext context = default!;
+    private IQueryable<Hall> HallsQuery { get; set; } = default!;
 
     protected override void OnInitialized()
     {
         context = DbFactory.CreateDbContext();
+        HallsQuery = context.Hall.Include(h => h.Address).AsQueryable();
     }
 
     public async ValueTask DisposeAsync() => await context.DisposeAsync();

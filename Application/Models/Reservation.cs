@@ -6,8 +6,8 @@
         public List<User> Users { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
-        private DateTime _from;
-        private DateTime _to;
+        private DateTime _from = DateTime.Now;
+        private DateTime _to = DateTime.Now.AddHours(1);
 
         public DateTime From
         {

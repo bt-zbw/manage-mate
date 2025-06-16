@@ -19,8 +19,17 @@
         <dl class="row">
             <dt class="col-sm-2">Name</dt>
             <dd class="col-sm-10">@hall.Name</dd>
-            <dt class="col-sm-2">AddressId</dt>
-            <dd class="col-sm-10">@hall.AddressId</dd>
+            <dt class="col-sm-2">Address</dt>
+            <dd class="col-sm-10">
+                @if (hall.Address != null)
+                {
+                    <span>@($"{hall.Address.Street}, {hall.Address.ZipCode} {hall.Address.City}, {hall.Address.Country}")</span>
+                }
+                else
+                {
+                    <span>No address provided</span>
+                }
+            </dd>
         </dl>
         <div>
             <a href="@($"/halls/edit?id={hall.Id}")">Edit</a> |
@@ -38,7 +47,7 @@
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
-        hall = await context.Hall.FirstOrDefaultAsync(m => m.Id == Id);
+        hall = await context.Hall.Include(h => h.Address).FirstOrDefaultAsync(m => m.Id == Id);
 
         if (hall is null)
         {
