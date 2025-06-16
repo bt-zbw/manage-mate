@@ -94,7 +94,6 @@
 	{
 		using var context = DbFactory.CreateDbContext();
 		Halls = await context.Hall.Include(h => h.Address).ToListAsync();
-		//Courts = await context.Court.ToListAsync();
 		Users = await context.User.ToListAsync();
 
 		// Generate a 6-digit access code if not already set
@@ -108,7 +107,6 @@
 	}
 	private async Task OnHallSelected()
 	{
-		Console.WriteLine("Hall Selected");
 		using var context = DbFactory.CreateDbContext();
 		Courts = await context.Court.Where(c => c.HallId == selectedHallId).ToListAsync();
 		selectedCourtId = Guid.Empty;
