@@ -112,6 +112,12 @@
 		{
 			var doors = MqttController.Controller.GetDoorSensors();
 			doors[0].OpenDoor();
+			var courtNumber = context.Court.Where(c => c.Id == selectedCourtId).Select(c => c.Number).ToList()[0];
+			var lights = MqttController.Controller.GetLights();
+			if (lights.Count() >= courtNumber)
+			{
+				lights[courtNumber].TurnOnLight();
+			}
 		}
 	}
 }
