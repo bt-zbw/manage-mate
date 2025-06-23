@@ -29,5 +29,6 @@
             }
         }
         public string AccessCode { get; set; }
+        public bool IsAccessCodeUsed { get; set; }
     }
 }

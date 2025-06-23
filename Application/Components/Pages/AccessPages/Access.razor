@@ -83,6 +83,11 @@
 	<button type="submit" class="btn btn-primary" @onclick="CheckAccess">Check Access</button>
 </div>
 
+@if (!string.IsNullOrEmpty(message))
+{
+	<p>@message</p>
+}
+
 @code {
 	private List<Hall> Halls = new();
 	private List<Court> Courts = new();
@@ -101,23 +106,38 @@
 		Courts = await context.Court.Where(c => c.HallId == selectedHallId).ToListAsync();
 		selectedCourtId = Guid.Empty;
 	}
+	private string message = ""; // Added to display messages to the user
+
 	private async Task CheckAccess()
 	{
 		using var context = DbFactory.CreateDbContext();
-		var reservations = await context.Reservation.Where(r => (r.Halls.Where(h => h.Id == selectedHallId).Count() > 0) && 
-																(r.Courts.Where(c => c.Id == selectedCourtId).Count() >0) &&
-																(r.AccessCode == accesscode)
-													).CountAsync();
-		if (reservations > 0)
+		var reservation = await context.Reservation.FirstOrDefaultAsync(r => (r.Halls.Any(h => h.Id == selectedHallId)) && 
+																			(r.Courts.Any(c => c.Id == selectedCourtId)) &&
+																			(r.AccessCode == accesscode)
+													);
+
+		if (reservation != null)
 		{
-			var doors = MqttController.Controller.GetDoorSensors();
-			doors[0].OpenDoor();
-			var courtNumber = context.Court.Where(c => c.Id == selectedCourtId).Select(c => c.Number).ToList()[0];
-			var lights = MqttController.Controller.GetLights();
-			if (lights.Count() >= courtNumber)
+			if (reservation.IsAccessCodeUsed)
 			{
-				lights[courtNumber].TurnOnLight();
+				message = "code was already used";
 			}
+			else if (DateTime.Now < reservation.From || DateTime.Now > reservation.To)
+			{
+				message = "There is no reservation for this time";
+			}
+			else
+			{
+				var doors = MqttController.Controller.GetDoorSensors();
+				doors[0].OpenDoor();
+				reservation.IsAccessCodeUsed = true; // Mark code as used
+				await context.SaveChangesAsync(); // Save changes to the database
+				message = "Court is opened";
+			}
+		}
+		else
+		{
+			message = "Invalid access code or selection"; // Generic message for invalid code or selection
 		}
 	}
 }

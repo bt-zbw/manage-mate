@@ -128,7 +128,8 @@
 
 		// Set the selected user
 		Reservation.Users = selectedUserId != Guid.Empty ? await context.User.Where(u => u.Id == selectedUserId).ToListAsync() : new List<User>();
-
+		Reservation.IsAccessCodeUsed = false;
+		
 		context.Reservation.Add(Reservation);
 		await context.SaveChangesAsync();
 		NavigationManager.NavigateTo("/reservations");
