@@ -19,8 +19,10 @@
         <dl class="row">
             <dt class="col-sm-2">Name</dt>
             <dd class="col-sm-10">@reservation.Name</dd>
-            <dt class="col-sm-2">Description</dt>
-            <dd class="col-sm-10">@reservation.Description</dd>
+            <dt class="col-sm-2">Hall</dt>
+            <dd class="col-sm-10">@reservation.Halls.FirstOrDefault()?.Name</dd>
+            <dt class="col-sm-2">Court</dt>
+            <dd class="col-sm-10">@reservation.Courts.FirstOrDefault()?.Name</dd>
             <dt class="col-sm-2">From</dt>
             <dd class="col-sm-10">@reservation.From</dd>
             <dt class="col-sm-2">To</dt>
@@ -44,7 +46,10 @@
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
-        reservation = await context.Reservation.FirstOrDefaultAsync(m => m.Id == Id);
+        reservation = await context.Reservation
+            .Include(r => r.Halls)
+            .Include(r => r.Courts)
+            .FirstOrDefaultAsync(m => m.Id == Id);
 
         if (reservation is null)
         {

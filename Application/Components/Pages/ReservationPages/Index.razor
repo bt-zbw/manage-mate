@@ -14,9 +14,14 @@
     <a href="reservations/create">Create New</a>
 </p>
 
-<QuickGrid Class="table" Items="context.Reservation">
+<QuickGrid Class="table" Items="reservationsQuery">
     <PropertyColumn Property="reservation => reservation.Name" />
-    <PropertyColumn Property="reservation => reservation.Description" />
+    <TemplateColumn Title="Hall" Context="reservation">
+        @reservation.Halls.FirstOrDefault()?.Name
+    </TemplateColumn>
+    <TemplateColumn Title="Court" Context="reservation">
+        @reservation.Courts.FirstOrDefault()?.Name
+    </TemplateColumn>
     <PropertyColumn Property="reservation => reservation.From" />
     <PropertyColumn Property="reservation => reservation.To" />
     <PropertyColumn Property="reservation => reservation.AccessCode" />
@@ -30,10 +35,15 @@
 
 @code {
     private ApplicationDbContext context = default!;
+    private IQueryable<Reservation> reservationsQuery = default!;
 
     protected override void OnInitialized()
     {
         context = DbFactory.CreateDbContext();
+        reservationsQuery = context.Reservation
+            .Include(r => r.Halls)
+            .Include(r => r.Courts)
+            .AsQueryable();
     }
 
     public async ValueTask DisposeAsync() => await context.DisposeAsync();

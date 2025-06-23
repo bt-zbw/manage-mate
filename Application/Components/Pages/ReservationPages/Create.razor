@@ -96,11 +96,19 @@
 		Halls = await context.Hall.Include(h => h.Address).ToListAsync();
 		Users = await context.User.ToListAsync();
 
+		// Set explicit default times for the reservation
+		var now = DateTime.Now;
+		// Default 'From' to the start of the next hour from current time
+		Reservation.From = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0, DateTimeKind.Local).AddHours(1);
+		// Default 'To' to one hour after 'From'
+		Reservation.To = Reservation.From.AddHours(1);
+
 		// Generate a 6-digit access code if not already set
 		if (string.IsNullOrWhiteSpace(Reservation.AccessCode))
 		{
 			Reservation.AccessCode = GenerateAccessCode();
-			while (context.Reservation.Where(r => (r.AccessCode == Reservation.AccessCode) && (r.To < DateTime.UtcNow)).Count() > 0) {
+			// Ensure the generated access code is unique among reservations that are currently active or future
+			while (await context.Reservation.AnyAsync(r => r.AccessCode == Reservation.AccessCode && r.To > DateTime.UtcNow)) {
 				Reservation.AccessCode = GenerateAccessCode();
 			}
 		}
