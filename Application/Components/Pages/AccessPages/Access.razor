@@ -130,6 +130,12 @@
 			{
 				var doors = MqttController.Controller.GetDoorSensors();
 				doors[0].OpenDoor();
+				var courtNumber = context.Court.Where(c => c.Id == selectedCourtId).Select(c => c.Number).ToList()[0];
+				var lights = MqttController.Controller.GetLights();
+				if (lights.Count() >= courtNumber)
+				{
+					lights[courtNumber].TurnOnLight();
+				}
 				reservation.IsAccessCodeUsed = true; // Mark code as used
 				await context.SaveChangesAsync(); // Save changes to the database
 				message = "Court is opened";
